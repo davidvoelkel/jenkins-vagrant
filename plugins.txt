@@ -1,0 +1,4 @@
+# contains all required plugins. You have to specify them transitively
+# 
+# subversion:1.39
+scm-sync-configuration:0.0.8

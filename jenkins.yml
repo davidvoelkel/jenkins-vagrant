@@ -10,3 +10,11 @@
   apt:  update_cache=yes #cache_valid_time=3600
 - name: Install jenkins apt package
   apt:  name=jenkins state=present
+- name: Copy download script to machine
+  copy: src=download-plugins.sh dest=/tmp/download-plugins.sh owner=vagrant group=vagrant mode=0744
+- name: Copy plugins list to machine
+  copy: src=plugins.txt dest=/tmp/plugins.txt 
+- name: Download Jenkins plugins
+  command: /tmp/download-plugins.sh /tmp/plugins.txt 
+  changed_when: false
+- service: name=jenkins state=restarted
