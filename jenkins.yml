@@ -1,15 +1,29 @@
 ---
+# Git
+- name: Install Git apt package
+  apt:  name=git-core state=present
+
+# Jenkins Repo and package install
 - name: Add jenkins apt-key
-  #apt_key: keyserver=keyserver.ubuntu.com id=10AF40FE
   apt_key: keyserver=keyserver.ubuntu.com id=9B7D32F2D50582E6
 - name: Add Jenkins apt repo 
   apt_repository: repo='deb http://pkg.jenkins-ci.org/debian-stable binary/' state=present
-#- name: Add jenkins apt-key
-#   apt_key: data="{{ lookup('file', 'jenkins-ci.org.key') }}" state=present
 - name: Update apt
   apt:  update_cache=yes #cache_valid_time=3600
 - name: Install jenkins apt package
   apt:  name=jenkins state=present
+
+# SSH keys for jenkisn user
+- name: Create Jenkins .ssh dir 
+  file: path=/var/lib/jenkins/.ssh owner=jenkins state=directory  
+- name: Copy Jenkins private ssh-Key (you need to put a id_rsa key into the checkout project dir!!!) 
+  copy: src=id_rsa dest=/var/lib/jenkins/.ssh owner=jenkins mode=600
+- name: Copy Jenkins public ssh-Key 
+  copy: src=id_rsa.pub dest=/var/lib/jenkins/.ssh owner=jenkins
+- name: Copy Jenkins ssh config
+  copy: src=/vagrant/jenkins.user.ssh.config dest=/var/lib/jenkins/.ssh/config owner=jenkins
+
+# Plugins
 - name: Copy download script to machine
   copy: src=download-plugins.sh dest=/tmp/download-plugins.sh owner=vagrant group=vagrant mode=0744
 - name: Copy plugins list to machine
@@ -17,4 +31,5 @@
 - name: Download Jenkins plugins
   command: /tmp/download-plugins.sh /tmp/plugins.txt 
   changed_when: false
+
 - service: name=jenkins state=restarted
