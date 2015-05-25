@@ -21,7 +21,7 @@
 - name: Copy Jenkins public ssh-Key 
   copy: src=id_rsa.pub dest=/var/lib/jenkins/.ssh owner=jenkins
 - name: Copy Jenkins ssh config
-  copy: src=/vagrant/jenkins.user.ssh.config dest=/var/lib/jenkins/.ssh/config owner=jenkins
+  copy: src=jenkins.user.ssh.config dest=/var/lib/jenkins/.ssh/config owner=jenkins
 
 # Plugins
 - name: Copy download script to machine
@@ -32,4 +32,22 @@
   command: /tmp/download-plugins.sh /tmp/plugins.txt 
   changed_when: false
 
-- service: name=jenkins state=restarted
+# Set Jenkins SCM repo
+- name: Set Jenkins SCM repo
+  template: src=scm-sync-configuration.xml.j2 dest=/var/lib/jenkins/scm-sync-configuration.xml owner=jenkins
+
+# Restart Jenkins 
+- name: Restart Jenkins to reload updated configuration
+  service: name=jenkins state=restarted
+- name: Wait until Jenkins is listening
+  wait_for: host=localhost port=8080 connect_timeout=30 timeout=60
+- name: Wait until Jenkins is fully up and running 
+  shell: curl --head --silent http://localhost:8080/cli/
+  register: result
+  until: result.stdout.find("200 OK") != -1
+  retries: 12
+  delay: 5
+- name: Load Jenkins Config from SCM
+  uri: url=http://localhost:8080/plugin/scm-sync-configuration/reloadAllFilesFromScm
+- name: Restart Jenkins to reload updated configuration
+  service: name=jenkins state=restarted

@@ -4,3 +4,6 @@
   tasks:
   - include: oracle_jdk.yml
   - include: jenkins.yml
+    vars:
+      jenkins_config_git_url: scm:git:git@github.com:davidvoelkeljenkins/jenkinsconfig
+
